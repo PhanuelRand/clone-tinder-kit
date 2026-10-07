@@ -29,7 +29,18 @@
  *
  *   export function readConversation(input: {
  *     matchId: string; readerId: string
- *   }): Promise<{ status: number; messages: { senderId: string; body: string }[] }>
+ *   }): Promise<{
+ *     status: number
+ *     messages: { senderId: string; body: string; read: boolean }[]
+ *   }>                          // read : le destinataire a lu ce message
+ *
+ *   export function markRead(input: {
+ *     matchId: string; readerId: string
+ *   }): Promise<{ status: number }>   // 200; 403 pour un tiers
+ *                                     // marque lus les messages reçus de l'autre
+ *
+ *   export function unreadCount(memberId: string): Promise<number>
+ *                             // messages reçus et pas encore lus, dans les matchs actifs
  *
  *   export function subscribe(input: {
  *     matchId: string; readerId: string
@@ -52,11 +63,13 @@ import {
   createMember,
   discover,
   listMatches,
+  markRead,
   readConversation,
   sendMessage,
   subscribe,
   swipe,
   unmatch,
+  unreadCount,
 } from '../../../src/academie/module-13'
 import { todayInMadagascar } from '../_support/dates'
 
@@ -208,5 +221,50 @@ describe('le blocage', () => {
     expect((await block({ blockerId: blocker, blockedId: blocker })).status).toBe(400)
     await block({ blockerId: blocker, blockedId: blocked })
     expect([200, 201]).toContain((await block({ blockerId: blocker, blockedId: blocked })).status)
+  })
+})
+
+describe('les messages non lus et l’accusé de lecture', () => {
+  it('compte les messages non lus du destinataire, pas ceux de l’auteur', async () => {
+    const { matchId, aId, bId } = await createMatch()
+    await sendMessage({ matchId, senderId: aId, body: 'Bonjour' })
+    await sendMessage({ matchId, senderId: aId, body: 'Tu es là ?' })
+
+    expect(await unreadCount(bId)).toBe(2)
+    expect(await unreadCount(aId)).toBe(0)
+  })
+
+  it('remet le compteur à zéro quand le destinataire lit, et le montre à l’auteur', async () => {
+    const { matchId, aId, bId } = await createMatch()
+    await sendMessage({ matchId, senderId: aId, body: 'Bonjour' })
+    expect((await readConversation({ matchId, readerId: aId })).messages[0]?.read).toBe(false)
+
+    expect((await markRead({ matchId, readerId: bId })).status).toBe(200)
+    expect(await unreadCount(bId)).toBe(0)
+    expect(
+      (await readConversation({ matchId, readerId: aId })).messages[0]?.read,
+      'l’auteur voit que son message a été lu',
+    ).toBe(true)
+  })
+
+  it('ne marque pas lus les messages de celui qui lit', async () => {
+    const { matchId, aId, bId } = await createMatch()
+    await sendMessage({ matchId, senderId: aId, body: 'Bonjour' })
+    await markRead({ matchId, readerId: aId })
+
+    expect(await unreadCount(bId)).toBe(1)
+  })
+
+  it('refuse à un tiers de marquer une conversation comme lue, avec 403', async () => {
+    const { matchId } = await createMatch()
+    expect((await markRead({ matchId, readerId: strangerId })).status).toBe(403)
+  })
+
+  it('ne compte plus les messages d’un match défait', async () => {
+    const { matchId, aId, bId } = await createMatch()
+    await sendMessage({ matchId, senderId: aId, body: 'Bonjour' })
+    await unmatch({ matchId, memberId: aId })
+
+    expect(await unreadCount(bId)).toBe(0)
   })
 })

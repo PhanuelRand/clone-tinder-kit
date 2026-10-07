@@ -17,6 +17,7 @@
  *     birthDate?: string              // par défaut '2000-01-01'
  *     ageMin?: number; ageMax?: number  // par défaut 18 et 99
  *     photo?: boolean                 // par défaut true : le profil a une photo
+ *     paused?: boolean                // par défaut false : le profil est en pause (module 6)
  *   }): Promise<string>               // un membre complet, au courriel inventé
  *
  *   export function discover(input: {
@@ -30,7 +31,7 @@
  *
  * Un profil apparaît dans la découverte d'un membre quand :
  *   - il est dans la même ville, et ce n'est pas le membre lui-même;
- *   - il a au moins une photo (module 6);
+ *   - il a au moins une photo, et il n'est pas en pause (module 6);
  *   - son genre est cherché par le membre, et le genre du membre est cherché
  *     par lui;
  *   - son âge est dans la tranche du membre, et l'âge du membre est dans la
@@ -91,6 +92,15 @@ describe('qui apparaît', () => {
     await createMember({ city, photo: false })
 
     expect(await idsSeenBy(viewer)).toEqual([complete])
+  })
+
+  it('cache un profil mis en pause', async () => {
+    const city = uniqueCity('pause')
+    const viewer = await createMember({ city })
+    const active = await createMember({ city })
+    await createMember({ city, paused: true })
+
+    expect(await idsSeenBy(viewer)).toEqual([active])
   })
 
   it('ne montre que le genre cherché', async () => {

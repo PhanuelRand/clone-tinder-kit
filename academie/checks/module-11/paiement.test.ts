@@ -28,6 +28,14 @@
  *   }): Promise<{ premium: boolean; until: string | null }>   // until : instant ISO 8601
  *
  *   export function quota(input: { memberId: string; now: string })   // celle du module 10
+ *   export function swipe(input: { fromId; toId; decision; now? })     // celle du module 10
+ *
+ *   export function likesReceived(input: {
+ *     memberId: string; now: string
+ *   }): Promise<{
+ *     status: number                   // 200 pour un membre Premium, 403 sinon
+ *     items: { memberId: string }[]    // ceux qui l'ont liké ou super liké
+ *   }>
  *
  *   export function signWebhook(payload: string): string
  *   export function handleWebhook(input: {
@@ -44,16 +52,22 @@
  * sa clé d'idempotence et prolonge le Premium, exactement comme
  * `capturePayment`. Un débit déjà enregistré sous cette clé ne se dédouble pas,
  * et ne prolonge rien une seconde fois.
+ *
+ * « Qui m'a liké » est réservé au Premium : un membre gratuit reçoit 403 et
+ * aucune liste. La liste ne montre que les likes et les super likes auxquels le
+ * membre n'a pas encore répondu; un refus reçu n'y figure jamais.
  */
 import { describe, expect, it } from 'vitest'
 import {
   capturePayment,
   createMember,
   handleWebhook,
+  likesReceived,
   listCharges,
   quota,
   signWebhook,
   subscription,
+  swipe,
 } from '../../../src/academie/module-11'
 
 const price = 9_900
@@ -211,5 +225,53 @@ describe('les webhooks du prestataire', () => {
     await handleWebhook({ payload, signature: signWebhook(payload) })
 
     expect(await listCharges(memberId)).toHaveLength(1)
+  })
+})
+
+describe('qui m’a liké, réservé au Premium', () => {
+  const during = '2030-07-02T10:00:00.000Z'
+
+  async function premiumMember() {
+    const memberId = await createMember()
+    await capturePayment({ memberId, amount: price, idempotencyKey: `${memberId}-1`, now: paidAt })
+    return memberId
+  }
+
+  it('refuse la liste à un membre gratuit, avec 403', async () => {
+    const memberId = await createMember()
+    await swipe({ fromId: await createMember(), toId: memberId, decision: 'LIKE' })
+
+    const result = await likesReceived({ memberId, now: during })
+    expect(result.status).toBe(403)
+    expect(result.items, 'un membre gratuit ne voit pas qui l’a liké').toEqual([])
+  })
+
+  it('montre les likes et les super likes reçus, jamais les refus', async () => {
+    const memberId = await premiumMember()
+    const liker = await createMember()
+    const superLiker = await createMember()
+    const passer = await createMember()
+    await swipe({ fromId: liker, toId: memberId, decision: 'LIKE' })
+    await swipe({ fromId: superLiker, toId: memberId, decision: 'SUPER_LIKE' })
+    await swipe({ fromId: passer, toId: memberId, decision: 'PASS' })
+
+    const result = await likesReceived({ memberId, now: during })
+    expect(result.status).toBe(200)
+    const ids = result.items.map((item) => item.memberId)
+    expect([...ids].sort()).toEqual([liker, superLiker].sort())
+  })
+
+  it('retire de la liste un like auquel le membre a répondu', async () => {
+    const memberId = await premiumMember()
+    const liker = await createMember()
+    await swipe({ fromId: liker, toId: memberId, decision: 'LIKE' })
+    await swipe({ fromId: memberId, toId: liker, decision: 'LIKE' })
+
+    expect((await likesReceived({ memberId, now: during })).items).toEqual([])
+  })
+
+  it('ferme la liste quand le Premium expire', async () => {
+    const memberId = await premiumMember()
+    expect((await likesReceived({ memberId, now: '2030-08-15T10:00:00.000Z' })).status).toBe(403)
   })
 })

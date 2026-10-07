@@ -33,6 +33,12 @@
  *     allowed: boolean; reason?: string
  *   }>
  *
+ *   export function setPaused(input: {
+ *     memberId: string; paused: boolean
+ *   }): Promise<void>                 // met le profil en pause, ou le reprend
+ *
+ *   export function deleteAccount(memberId: string): Promise<{ status: number }>  // 200
+ *
  * Règles imposées par la consigne, que cette suite vérifie :
  *   - une bio fait 500 caractères au plus, et un profil a cinq centres
  *     d'intérêt au plus;
@@ -40,7 +46,10 @@
  *   - un fichier de plus de 10 000 000 octets est refusé;
  *   - l'URL de téléversement expire dans les deux heures;
  *   - un profil a six photos au plus, dont exactement une photo principale;
- *   - un profil sans photo n'apparaît pas dans la découverte.
+ *   - un profil sans photo n'apparaît pas dans la découverte;
+ *   - un profil en pause n'apparaît pas dans la découverte, et réapparaît à la
+ *     reprise;
+ *   - un compte supprimé perd ses photos et n'apparaît plus nulle part.
  *
  * Les photos passent par votre port « stockage » : en local et dans ces
  * vérifications, un stockage simulé qui écrit sur le disque; en production,
@@ -53,8 +62,10 @@ import {
   canAppearInDiscovery,
   createMember,
   createUploadUrl,
+  deleteAccount,
   listPhotos,
   setMainPhoto,
+  setPaused,
   updateProfile,
 } from '../../../src/academie/module-6'
 
@@ -206,5 +217,27 @@ describe('la découverte', () => {
   it('montre un profil dès qu’il a une photo', async () => {
     const memberId = await memberWithPhotos(1)
     expect((await canAppearInDiscovery(memberId)).allowed).toBe(true)
+  })
+})
+
+describe('la pause et la suppression du compte', () => {
+  it('cache un profil en pause, avec un motif, et le montre de nouveau à la reprise', async () => {
+    const memberId = await memberWithPhotos(1)
+
+    await setPaused({ memberId, paused: true })
+    const paused = await canAppearInDiscovery(memberId)
+    expect(paused.allowed, 'un profil en pause est caché').toBe(false)
+    expect(paused.reason, 'le refus doit porter un motif lisible').toBeTruthy()
+
+    await setPaused({ memberId, paused: false })
+    expect((await canAppearInDiscovery(memberId)).allowed, 'la reprise le montre de nouveau').toBe(true)
+  })
+
+  it('efface les photos et cache le profil d’un compte supprimé', async () => {
+    const memberId = await memberWithPhotos(2)
+
+    expect((await deleteAccount(memberId)).status).toBe(200)
+    expect(await listPhotos(memberId), 'les photos d’un compte supprimé sont effacées').toEqual([])
+    expect((await canAppearInDiscovery(memberId)).allowed).toBe(false)
   })
 })
