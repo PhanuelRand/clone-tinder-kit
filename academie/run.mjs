@@ -37,7 +37,9 @@ if (process.env.DATABASE_URL_VERIFICATION) {
   console.log('Base des vérifications : DATABASE_URL_VERIFICATION. Application des migrations…')
   if (lancer('npm run migrate --if-present').status !== 0) {
     console.error('Les migrations ne passent pas sur la base des vérifications.')
-    console.error('Vérifiez que cette base existe (module 2), puis relancez.')
+    console.error('Deux causes possibles. La base n’existe pas : créez-la (module 2).')
+    console.error('Ou une migration échoue sur des lignes laissées par un essai précédent, par exemple')
+    console.error('des doublons après le module 12 : supprimez la base des vérifications, recréez-la, puis relancez.')
     process.exit(1)
   }
 }

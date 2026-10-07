@@ -163,3 +163,12 @@ Les couleurs sont des variables CSS dans `web/src/styles.css`. Ne mettez jamais
 une couleur en dur dans un composant.
 
 **N'écrivez pas de composant maison pour ce que shadcn fournit déjà.**
+
+Deux pièges propres à ces composants :
+
+- Le `Button` de shadcn se rend avec `type="button"`. Dans un `<form>`, il n'envoie
+  donc jamais le formulaire, sans erreur ni message. Écrivez `type="submit"` sur le
+  bouton qui envoie.
+- Un champ de fichier caché (`className="hidden"`) n'a pas d'`aria-label` : un champ
+  qu'on ne voit pas ne se nomme pas, et il ferait doublon avec le bouton qui l'ouvre.
+
