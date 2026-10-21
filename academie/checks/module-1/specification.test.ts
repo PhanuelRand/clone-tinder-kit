@@ -35,9 +35,16 @@ function plain(text: string) {
     .toLocaleLowerCase('fr')
 }
 
+/**
+ * Le document, sans les consignes du gabarit : elles sont en italique, entre
+ * deux « _ », et ne comptent ni comme du texte rédigé ni pour les mots cherchés.
+ */
 function document() {
   const path = resolve(process.cwd(), specification.chemin)
-  return existsSync(path) ? readFileSync(path, 'utf8') : ''
+  if (!existsSync(path)) return ''
+  return readFileSync(path, 'utf8')
+    .replace(/(^|\s)_[^_]+?_(?=\s|$)/g, '$1')
+    .replace(/Remplacez chaque consigne en italique par votre texte\.\s+Gardez les titres : les\s+vérifications du module 1 les cherchent\./, '')
 }
 
 function headings(text: string) {

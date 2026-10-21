@@ -5,7 +5,9 @@ On l'appelle aussi l'API : c'est le programme qui reçoit les demandes de votre
 interface et leur répond.
 
 - `app.ts` décrit vos routes. C'est là que vous écrivez.
-- `serveur.ts` démarre l'application. Vous n'avez pas à le modifier.
+- `serveur.ts` démarre l'application. Vous le modifiez rarement, et le cours
+  vous dit quand : pour une tâche qui revient à intervalle régulier, ou pour
+  brancher le temps réel (le WebSocket).
 
 L'interface est à côté, dans `web/`. Ce sont deux applications distinctes, et
 la raison est écrite dans `docs/decisions/0005`.

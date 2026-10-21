@@ -9,10 +9,10 @@ import './styles.css'
  *
  * Pour ajouter un écran, importez son composant en haut du fichier et ajoutez
  * une ligne au tableau. Un segment qui commence par « : » est un paramètre :
- * « /annonces/:id » répond à « /annonces/42 », et l'écran lit « 42 » avec
+ * « /conversations/:id » répond à « /conversations/42 », et l'écran lit « 42 » avec
  * useParams().
  *
- *   { path: '/annonces/:id', element: <Annonce /> },
+ *   { path: '/conversations/:id', element: <Conversation /> },
  */
 const routeur = createBrowserRouter([{ path: '/', element: <App /> }])
 

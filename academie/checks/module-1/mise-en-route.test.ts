@@ -63,11 +63,13 @@ describe('votre installation de Node', () => {
   })
 
   it('correspond à une version assez récente', () => {
-    const majeure = Number(/^v?(\d+)\./.exec(miseEnRoute.versionNode.trim())?.[1])
+    const [majeure = 0, mineure = 0] = (/^v?(\d+)\.(\d+)\./.exec(miseEnRoute.versionNode.trim()) ?? [])
+      .slice(1)
+      .map(Number)
     expect(
-      majeure,
-      'le parcours demande Node 22 ou plus récent; installez-le avant de continuer',
-    ).toBeGreaterThanOrEqual(22)
+      majeure > 22 || (majeure === 22 && mineure >= 12),
+      'le parcours demande Node 22.12 ou plus récent; installez-le avant de continuer',
+    ).toBe(true)
   })
 })
 

@@ -29,7 +29,7 @@ function lancer(commande) {
   return spawnSync(commande, { stdio: 'inherit', shell: true })
 }
 
-// Les vérifications créent des comptes et des annonces d'essai. Sur votre
+// Les vérifications créent des membres et des matchs d'essai. Sur votre
 // machine, elles écrivent dans une base à part si vous en avez une, pour que
 // votre application ne se remplisse pas de fausses données.
 if (process.env.DATABASE_URL_VERIFICATION) {

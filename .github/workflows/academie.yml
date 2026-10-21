@@ -77,8 +77,12 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/rencontres_test
           # Des valeurs de vérification seulement : ce ne sont pas des secrets.
           ORIGINE_INTERFACE: http://localhost:5173
+          # La même valeur que dans .env.example : une adresse construite avec
+          # ADRESSE_API doit être identique ici et sur votre machine.
+          ADRESSE_API: http://localhost:3000
           SECRET_STOCKAGE: valeur-de-verification-du-stockage
           SECRET_WEBHOOK: valeur-de-verification-du-prestataire
+          SECRET_TICKET: valeur-de-verification-du-ticket
           # Renseignez ces deux secrets au module 15, quand votre application est
           # déployée : la suite de mise en production interroge leurs adresses.
           DEPLOYMENT_URL: ${{ secrets.DEPLOYMENT_URL }}

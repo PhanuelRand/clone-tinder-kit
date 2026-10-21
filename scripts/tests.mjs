@@ -2,7 +2,7 @@
 //
 // Usage : npm test
 //
-// Vos tests créent des comptes et des réservations. Quand .env définit
+// Vos tests créent des membres et des matchs. Quand .env définit
 // DATABASE_URL_VERIFICATION, ils les créent dans cette base-là, comme les
 // vérifications de l'Académie, et votre application reste propre.
 

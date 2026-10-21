@@ -2,7 +2,7 @@
 
 Ce dépôt est le projet d'un étudiant de l'Académie IA : un clone de Tinder,
 une application de rencontres entre adultes, construite module après module,
-en dix-sept modules. L'étudiant débute souvent en programmation. Ces règles
+en dix-huit modules. L'étudiant débute souvent en programmation. Ces règles
 valent pour tout assistant qui écrit du code ici.
 
 Expliquez ce que vous faites en français simple, et définissez un mot technique
